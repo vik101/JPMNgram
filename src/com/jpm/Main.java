@@ -4,7 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,28 +32,28 @@ public class Main {
 
         List<String> lookAheadWords = getLookAheadWords(length, userText);
 
-        Map<String, Integer> wordsFreqMap = new HashMap<>();
-        wordsMap = lookAheadWords
-            .stream()
-            .collect(Collectors.groupingby(word -> word, () -> wordsMap, Collectors.counting()));
+        Map<String, Long> wordsMap = new HashMap<>();
+        lookAheadWords.stream()
+            .collect(Collectors.groupingBy(word -> word, () -> wordsMap, Collectors.counting()));
 
-        Integer sumOfWordFreqs = wordsMap.values()
+        Long sumOfWordFreqs = wordsMap.values()
             .stream()
-            .mapToInt(Integer::valueOf)
+            .mapToLong(Long::valueOf)
             .sum();
 
-        Map<String, Integer> sortedWordsMap = wordsMap.entrySet()
+        Map<String, Long> sortedWordsMap = wordsMap.entrySet()
             .stream()
-            .sorted(Map.Entry.comparingByValue());
+            .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2,
+                    LinkedHashMap::new));
 
         StringBuilder output = new StringBuilder();
 
-
-        for (Map.Entry<String, String> entry : sortedWordsMap.entrySet()) {
-            double ratioOfWord = entry.getValue() / sumOfWordFreqs;
+        for (Map.Entry<String, Long> entry : sortedWordsMap.entrySet()) {
+            double ratioOfWord = entry.getValue() / (double) sumOfWordFreqs;
             output.append(entry.getKey());
             output.append(",");
-            output.append(String.format("%.2f", input));
+            output.append(String.format("%.3f", ratioOfWord));
             output.append(";");
         }
 
@@ -59,9 +62,9 @@ public class Main {
 
     private static List<String> getLookAheadWords(int length, String userText) {
         String[] wordsInPoem = getWordTokensFromPoem();
-        List<String> result = new ArrayList<String>;
+        List<String> result = new ArrayList<>();
 
-        j = 0;
+        int j = 0;
         while ((j + (length - 1)) < wordsInPoem.length) {
             if(wordsInPoem[j].equals(userText)) {
                 result.add(wordsInPoem[j + (length - 1)]);
@@ -73,10 +76,10 @@ public class Main {
         return result;
     }
 
-    private String[] getWordTokensFromPoem() {
+    private static String[] getWordTokensFromPoem() {
         return poem
             .replaceAll("[\\t\\n\\r]+"," ")
-            .replaceAll()("[^a-zA-Z ]", "").toLowerCase().split("\\s+");
+            .replaceAll("[^a-zA-Z ]", "").toLowerCase().split("\\s+");
     }
 
     private static String poem = "Mary had a little lamb its fleece was white as snow;\n" +
